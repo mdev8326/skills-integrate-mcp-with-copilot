@@ -6,6 +6,8 @@ A super simple FastAPI application that allows students to view and sign up for 
 
 - View all available extracurricular activities
 - Sign up for activities
+- Institution-scoped tenant filtering using request headers
+- Audit logging for critical activity mutations
 
 ## Getting Started
 
@@ -29,8 +31,21 @@ A super simple FastAPI application that allows students to view and sign up for 
 
 | Method | Endpoint                                                          | Description                                                         |
 | ------ | ----------------------------------------------------------------- | ------------------------------------------------------------------- |
-| GET    | `/activities`                                                     | Get all activities with their details and current participant count |
-| POST   | `/activities/{activity_name}/signup?email=student@mergington.edu` | Sign up for an activity                                             |
+| GET    | `/activities`                                                     | Get activities visible to the request institution                   |
+| POST   | `/activities/{activity_name}/signup?email=student@mergington.edu` | Sign up for an activity in your institution                         |
+| DELETE | `/activities/{activity_name}/unregister?email=student@mergington.edu` | Unregister a student from an institution-scoped activity        |
+| PATCH  | `/activities/{activity_name}/capacity?max_participants=25`       | Update capacity (admin/superadmin only)                            |
+| GET    | `/audit-logs`                                                     | Read audit logs (admin/superadmin only)                            |
+
+## Tenant Context Headers
+
+All API calls accept these headers for tenant and actor context propagation:
+
+- `x-institution-id` (default: `mergington-high`)
+- `x-user-id` (default: `anonymous`)
+- `x-user-role` (default: `guardian`; accepted: guardian, teacher, admin, superadmin)
+
+If an activity exists in another institution, the API returns `404 Activity not found` to prevent cross-tenant data leakage.
 
 ## Data Model
 
@@ -47,4 +62,4 @@ The application uses a simple data model with meaningful identifiers:
    - Name
    - Grade level
 
-All data is stored in memory, which means data will be reset when the server restarts.
+All data and audit logs are stored in memory, which means they reset when the server restarts.
